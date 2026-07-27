@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
+import { useAuthStore } from "@/lib/auth-store";
 
 // ============================================
 // TYPES
@@ -897,6 +898,7 @@ export default function MessagesPage() {
   const [showGroupsModal, setShowGroupsModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const fetchBalance = useAuthStore((state) => state.fetchBalance);
 
   const fetchMessages = useCallback(async () => {
     setIsLoading(true);
@@ -1230,17 +1232,17 @@ export default function MessagesPage() {
       <SendSmsModal
         isOpen={showSendModal}
         onClose={() => setShowSendModal(false)}
-        onSent={fetchMessages}
+        onSent={() => { fetchMessages(); fetchBalance(); }}
       />
       <SendBulkSmsModal
         isOpen={showBulkModal}
         onClose={() => setShowBulkModal(false)}
-        onSent={fetchMessages}
+        onSent={() => { fetchMessages(); fetchBalance(); }}
       />
       <SendToGroupsModal
         isOpen={showGroupsModal}
         onClose={() => setShowGroupsModal(false)}
-        onSent={fetchMessages}
+        onSent={() => { fetchMessages(); fetchBalance(); }}
       />
 
       {/* Message Detail Modal */}

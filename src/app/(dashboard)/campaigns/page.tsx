@@ -19,6 +19,7 @@ import {
   X,
   Loader2,
   Edit,
+  Eye,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -245,21 +246,31 @@ function DateTimePickerInline({
       <div className="space-y-2">
         <label className="text-xs font-medium text-muted-foreground">Heure d'envoi</label>
         <div className="grid grid-cols-6 gap-1.5 max-h-[120px] overflow-y-auto rounded-lg border border-border/50 bg-background p-2">
-          {TIME_SLOTS.map((time) => (
-            <button
-              key={time}
-              type="button"
-              onClick={() => onTimeChange(time)}
-              className={cn(
-                "px-1.5 py-1.5 rounded-md text-[11px] font-medium transition-all",
-                selectedTime === time
-                  ? "bg-primary text-white shadow-sm"
-                  : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
-              )}
-            >
-              {time}
-            </button>
-          ))}
+          {TIME_SLOTS.map((time) => {
+            // Désactiver les créneaux passés si la date sélectionnée est aujourd'hui
+            const isSelectedToday = selectedDate === `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+            const [h, m] = time.split(":").map(Number);
+            const isPastTime = isSelectedToday && (h < today.getHours() || (h === today.getHours() && m <= today.getMinutes()));
+
+            return (
+              <button
+                key={time}
+                type="button"
+                disabled={isPastTime}
+                onClick={() => onTimeChange(time)}
+                className={cn(
+                  "px-1.5 py-1.5 rounded-md text-[11px] font-medium transition-all",
+                  isPastTime
+                    ? "text-muted-foreground/30 cursor-not-allowed"
+                    : selectedTime === time
+                      ? "bg-primary text-white shadow-sm"
+                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                )}
+              >
+                {time}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -557,8 +568,9 @@ function CreateCampaignModal({
 // CAMPAIGN CARD
 // ============================================
 
-function CampaignCard({ campaign, onEdit, onSend, onSchedule, onCancel }: {
+function CampaignCard({ campaign, onView, onEdit, onSend, onSchedule, onCancel }: {
   campaign: Campaign;
+  onView: (campaign: Campaign) => void;
   onEdit: (campaign: Campaign) => void;
   onSend: (campaign: Campaign) => void;
   onSchedule: (campaign: Campaign) => void;
@@ -609,33 +621,35 @@ function CampaignCard({ campaign, onEdit, onSend, onSchedule, onCancel }: {
               </div>
             </div>
           </div>
-          {/* Actions pour les brouillons et programmées */}
-          {(campaign.status === "draft" || campaign.status === "scheduled") && (
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              {campaign.status === "draft" && (
-                <>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary"
-                    onClick={() => onEdit(campaign)} title="Modifier">
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-amber-500"
-                    onClick={() => onSchedule(campaign)} title="Programmer">
-                    <Calendar className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-emerald-500"
-                    onClick={() => onSend(campaign)} title="Envoyer">
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
-              {campaign.status === "scheduled" && (
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-red-500"
-                  onClick={() => onCancel(campaign)} title="Annuler">
-                  <XCircle className="h-4 w-4" />
+          {/* Actions */}
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary"
+              onClick={() => onView(campaign)} title="Voir détail">
+              <Eye className="h-4 w-4" />
+            </Button>
+            {campaign.status === "draft" && (
+              <>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary"
+                  onClick={() => onEdit(campaign)} title="Modifier">
+                  <Edit className="h-4 w-4" />
                 </Button>
-              )}
-            </div>
-          )}
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-amber-500"
+                  onClick={() => onSchedule(campaign)} title="Programmer">
+                  <Calendar className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-emerald-500"
+                  onClick={() => onSend(campaign)} title="Envoyer">
+                  <Send className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+            {campaign.status === "scheduled" && (
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-red-500"
+                onClick={() => onCancel(campaign)} title="Annuler">
+                <XCircle className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -658,6 +672,7 @@ export default function CampaignsPage() {
   const [showSendConfirm, setShowSendConfirm] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -788,6 +803,7 @@ export default function CampaignsPage() {
               <CampaignCard
                 key={campaign.id}
                 campaign={campaign}
+                onView={(c) => { setSelectedCampaign(c); setShowDetailModal(true); }}
                 onEdit={(c) => { setSelectedCampaign(c); setShowEditModal(true); }}
                 onSend={(c) => { setSelectedCampaign(c); setShowSendConfirm(true); }}
                 onSchedule={(c) => { setSelectedCampaign(c); setShowScheduleModal(true); }}
@@ -920,6 +936,14 @@ export default function CampaignsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Campaign Detail Modal */}
+      {showDetailModal && selectedCampaign && (
+        <CampaignDetailModal
+          campaign={selectedCampaign}
+          onClose={() => { setShowDetailModal(false); setSelectedCampaign(null); }}
+        />
       )}
     </div>
   );
@@ -1090,6 +1114,122 @@ function EditCampaignModal({
             </Button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// CAMPAIGN DETAIL MODAL
+// ============================================
+
+function CampaignDetailModal({ campaign, onClose }: { campaign: Campaign; onClose: () => void }) {
+  const status = statusConfig[campaign.status] || statusConfig.draft;
+  const type = typeConfig[campaign.type] || typeConfig.marketing;
+  const StatusIcon = status.icon;
+  const deliveryRate = campaign.total_sent > 0
+    ? ((campaign.total_delivered / campaign.total_sent) * 100).toFixed(1)
+    : "0";
+  const failRate = campaign.total_sent > 0
+    ? ((campaign.total_failed / campaign.total_sent) * 100).toFixed(1)
+    : "0";
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return "—";
+    return new Date(dateStr).toLocaleDateString("fr-FR", {
+      day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-lg mx-4 bg-background rounded-2xl border border-border shadow-2xl max-h-[85vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-background z-10">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">Détail de la campagne</h3>
+            <p className="text-sm text-muted-foreground mt-0.5">{campaign.name}</p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Statut et type */}
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/30 border border-border/50">
+            <div className={cn("flex h-10 w-10 items-center justify-center rounded-full", status.className)}>
+              <StatusIcon className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">{status.label}</p>
+              <p className={cn("text-xs font-medium", type.color)}>{type.label}</p>
+            </div>
+          </div>
+
+          {/* Contenu du message */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Message</p>
+            <div className="p-4 rounded-lg bg-muted/20 border border-border/50">
+              <p className="text-sm text-foreground whitespace-pre-wrap">{campaign.content}</p>
+              <p className="text-[10px] text-muted-foreground mt-2">
+                {campaign.content.length} caractères • {Math.ceil(campaign.content.length / 160) || 1} segment(s)
+              </p>
+            </div>
+          </div>
+
+          {/* Statistiques d'envoi */}
+          {campaign.total_recipients > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Statistiques</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg border border-border/50 text-center">
+                  <p className="text-lg font-bold text-foreground">{campaign.total_recipients}</p>
+                  <p className="text-[10px] text-muted-foreground">Destinataires</p>
+                </div>
+                <div className="p-3 rounded-lg border border-border/50 text-center">
+                  <p className="text-lg font-bold text-blue-600">{campaign.total_sent}</p>
+                  <p className="text-[10px] text-muted-foreground">Envoyés</p>
+                </div>
+                <div className="p-3 rounded-lg border border-border/50 text-center">
+                  <p className="text-lg font-bold text-emerald-600">{campaign.total_delivered}</p>
+                  <p className="text-[10px] text-muted-foreground">Délivrés ({deliveryRate}%)</p>
+                </div>
+                <div className="p-3 rounded-lg border border-border/50 text-center">
+                  <p className="text-lg font-bold text-red-500">{campaign.total_failed}</p>
+                  <p className="text-[10px] text-muted-foreground">Échoués ({failRate}%)</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Dates */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dates</p>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center py-2 border-b border-border/30">
+                <span className="text-sm text-muted-foreground">Créée le</span>
+                <span className="text-sm font-medium text-foreground">{formatDate(campaign.created_at)}</span>
+              </div>
+              {campaign.scheduled_at && (
+                <div className="flex justify-between items-center py-2 border-b border-border/30">
+                  <span className="text-sm text-muted-foreground">Programmée pour</span>
+                  <span className="text-sm font-medium text-foreground">{formatDate(campaign.scheduled_at)}</span>
+                </div>
+              )}
+              {campaign.sent_at && (
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-sm text-muted-foreground">Envoyée le</span>
+                  <span className="text-sm font-medium text-foreground">{formatDate(campaign.sent_at)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Button variant="outline" className="w-full" onClick={onClose}>
+            Fermer
+          </Button>
+        </div>
       </div>
     </div>
   );
