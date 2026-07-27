@@ -154,7 +154,7 @@ function Sidebar({ collapsed, onToggle, onLogout, user, tenant, smsBalance }: Si
               <p className="text-xs font-medium text-foreground">
                 {smsBalance
                   ? `${smsBalance.amount.toLocaleString()} ${smsBalance.currency}`
-                  : `${tenant?.sms_credits?.toLocaleString() || 0} crédits`}
+                  : "—"}
               </p>
               {/*<p className="text-[10px] text-muted-foreground capitalize">*/}
               {/*  {tenant ? `Plan ${tenant.plan}` : "—"}*/}

@@ -5,7 +5,6 @@ import {
   Building2,
   Plus,
   Search,
-  CreditCard,
   Power,
   Loader2,
   ChevronLeft,
@@ -35,7 +34,6 @@ export default function AdminTenantsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<boolean | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<any>(null);
@@ -208,15 +206,6 @@ export default function AdminTenantsPage() {
         />
       )}
 
-      {/* Credits Modal */}
-      {showCreditsModal && selectedTenant && (
-        <CreditsModal
-          tenant={selectedTenant}
-          onClose={() => { setShowCreditsModal(false); setSelectedTenant(null); }}
-          onSaved={fetchTenants}
-        />
-      )}
-
       {/* Create Modal */}
       {showCreateModal && (
         <CreateTenantModal
@@ -269,52 +258,6 @@ export default function AdminTenantsPage() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function CreditsModal({ tenant, onClose, onSaved }: { tenant: any; onClose: () => void; onSaved: () => void }) {
-  const [amount, setAmount] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!amount) return;
-    setIsSaving(true);
-    try {
-      await api.updateTenantCredits(tenant.id, parseInt(amount));
-      onSaved();
-      onClose();
-    } catch {}
-    setIsSaving(false);
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-sm mx-4 bg-background rounded-2xl border border-border shadow-2xl">
-        <div className="flex items-center justify-between p-6 border-b border-border">
-          <h3 className="text-lg font-semibold">Gérer les crédits</h3>
-          <Button variant="ghost" size="icon" onClick={onClose}><X className="h-4 w-4" /></Button>
-        </div>
-        <form className="p-6 space-y-4" onSubmit={handleSubmit}>
-          <p className="text-sm text-muted-foreground">
-            {tenant.name} — <span className="font-semibold text-foreground">{tenant.sms_credits} crédits</span> actuels
-          </p>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Crédits à ajouter/retirer</label>
-            <Input type="number" placeholder="Ex: 500 ou -100" className="h-10" value={amount} onChange={(e) => setAmount(e.target.value)} />
-            <p className="text-xs text-muted-foreground">Positif pour ajouter, négatif pour retirer</p>
-          </div>
-          <div className="flex gap-3">
-            <Button type="button" variant="outline" className="flex-1" onClick={onClose}>Annuler</Button>
-            <Button type="submit" className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white" disabled={isSaving}>
-              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Appliquer
-            </Button>
-          </div>
-        </form>
-      </div>
     </div>
   );
 }
@@ -471,7 +414,8 @@ function TenantStatsModal({ tenant, onClose }: { tenant: any; onClose: () => voi
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-foreground">{stats.tenant.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    Plan {stats.tenant.plan} • {stats.tenant.sms_provider.toUpperCase()} • {stats.tenant.sms_credits.toLocaleString()} crédits
+                    Plan {stats.tenant.plan} • {stats.tenant.sms_provider.toUpperCase()}
+                    {stats.tenant.balance?.amount != null && ` • ${stats.tenant.balance.amount.toLocaleString()} ${stats.tenant.balance.currency}`}
                   </p>
                 </div>
                 <Badge variant="outline" className={cn("text-xs",

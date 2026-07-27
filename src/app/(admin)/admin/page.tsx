@@ -195,7 +195,6 @@ export default function AdminDashboardPage() {
                       <p className="text-xs text-muted-foreground">{tenant.email}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-semibold text-foreground">{tenant.sms_credits} crédits</p>
                       <Badge variant="outline" className={cn("text-[10px]",
                         tenant.is_active ? "bg-emerald-500/10 text-emerald-600 border-emerald-200" : "bg-red-500/10 text-red-500 border-red-200"
                       )}>

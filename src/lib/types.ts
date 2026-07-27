@@ -35,7 +35,6 @@ export interface Tenant {
   email: string;
   phone: string | null;
   plan: string;
-  sms_credits: number;
   sms_provider: string;
   is_active: boolean;
 }
@@ -292,14 +291,12 @@ export interface SmsSendResult {
 export interface SmsBulkResult {
   message: string;
   total_queued: number;
-  credits_remaining: number;
 }
 
 export interface SmsSendToGroupsResult {
   message: string;
   total_queued: number;
   groups_count: number;
-  credits_remaining: number;
 }
 
 // ─── Settings ───────────────────────────────────────────────────────────────
@@ -353,7 +350,6 @@ export interface AdminTenant {
   email: string;
   phone: string | null;
   plan: string;
-  sms_credits: number;
   sms_provider: string;
   is_active: boolean;
   created_at: string | null;
@@ -412,7 +408,7 @@ export interface TenantStats {
     name: string;
     email: string;
     plan: string;
-    sms_credits: number;
+    balance: { amount: number | null; currency: string | null };
     sms_provider: string;
     is_active: boolean;
     created_at: string | null;

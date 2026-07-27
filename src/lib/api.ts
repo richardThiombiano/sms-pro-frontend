@@ -556,8 +556,8 @@ class ApiClient {
     return this.request<AdminTenant>(`/admin/tenants/${tenantId}`, { method: "PATCH", body: JSON.stringify(data) });
   }
 
-  async updateTenantCredits(tenantId: string, amount: number) {
-    return this.request<AdminTenant>(`/admin/tenants/${tenantId}/credits?amount=${amount}`, { method: "PATCH" });
+  async getTenantBalance(tenantId: string) {
+    return this.request<{ tenant_id: string; tenant_name: string; amount: number | null; currency: string | null; provider: string; error?: string }>(`/admin/tenants/${tenantId}/balance`);
   }
 
   async toggleTenant(tenantId: string) {
