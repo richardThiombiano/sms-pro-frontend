@@ -13,6 +13,9 @@ import {
   Power,
   Loader2,
   X,
+  MessageCircle,
+  CheckCircle2,
+  Unplug,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +37,7 @@ export default function SettingsPage() {
     ...(isOwner ? [
       { id: "company", label: "Entreprise", icon: Building2 },
       { id: "team", label: "Équipe", icon: Users },
+      { id: "whatsapp", label: "WhatsApp", icon: MessageCircle },
     ] : []),
   ];
 
@@ -72,6 +76,7 @@ export default function SettingsPage() {
           {activeTab === "password" && <PasswordSection />}
           {activeTab === "company" && isOwner && <CompanySection />}
           {activeTab === "team" && isOwner && <TeamSection />}
+          {activeTab === "whatsapp" && isOwner && <WhatsAppSection />}
         </div>
       </div>
     </div>
@@ -542,5 +547,261 @@ function AddMemberModal({ onClose, onAdded }: { onClose: () => void; onAdded: ()
         </form>
       </div>
     </div>
+  );
+}
+
+
+// ============================================
+// WHATSAPP EMBEDDED SIGNUP (owner uniquement)
+// ============================================
+
+declare global {
+  interface Window {
+    FB: any;
+    fbAsyncInit: () => void;
+  }
+}
+
+function WhatsAppSection() {
+  const [status, setStatus] = useState<{
+    is_connected: boolean;
+    whatsapp_enabled: boolean;
+    phone_number_id: string | null;
+    business_account_id: string | null;
+    display_phone_number: string | null;
+    verified_name: string | null;
+  } | null>(null);
+  const [config, setConfig] = useState<{ app_id: string; config_id: string; api_version: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [sdkLoaded, setSdkLoaded] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  // Charger le statut et la config
+  useEffect(() => {
+    Promise.all([
+      api.getWhatsAppConnectionStatus().catch(() => null),
+      api.getWhatsAppSignupConfig().catch(() => null),
+    ]).then(([statusData, configData]) => {
+      setStatus(statusData);
+      setConfig(configData);
+      setIsLoading(false);
+    });
+  }, []);
+
+  // Charger le SDK Facebook JS
+  useEffect(() => {
+    if (!config?.app_id) return;
+
+    // Si le SDK est déjà chargé
+    if (window.FB) {
+      setSdkLoaded(true);
+      return;
+    }
+
+    window.fbAsyncInit = function () {
+      window.FB.init({
+        appId: config.app_id,
+        cookie: true,
+        xfbml: true,
+        version: config.api_version,
+      });
+      setSdkLoaded(true);
+    };
+
+    // Injecter le script SDK
+    if (!document.getElementById("facebook-jssdk")) {
+      const script = document.createElement("script");
+      script.id = "facebook-jssdk";
+      script.src = "https://connect.facebook.net/fr_FR/sdk.js";
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    }
+  }, [config]);
+
+  const launchEmbeddedSignup = () => {
+    if (!window.FB || !config) return;
+
+    setError("");
+    setIsConnecting(true);
+
+    window.FB.login(
+      (response: any) => {
+        if (response.authResponse?.code) {
+          // Envoyer le code au backend
+          api
+            .submitWhatsAppSignupCode(response.authResponse.code)
+            .then((result) => {
+              setSuccess(`WhatsApp connecté ! Numéro : ${result.display_phone_number || result.phone_number_id}`);
+              setStatus({
+                is_connected: true,
+                whatsapp_enabled: true,
+                phone_number_id: result.phone_number_id,
+                business_account_id: result.waba_id,
+                display_phone_number: result.display_phone_number,
+                verified_name: result.verified_name,
+              });
+            })
+            .catch((err) => {
+              setError(err.message || "Erreur lors de la connexion");
+            })
+            .finally(() => setIsConnecting(false));
+        } else {
+          setError("Inscription annulée ou échouée.");
+          setIsConnecting(false);
+        }
+      },
+      {
+        config_id: config.config_id,
+        response_type: "code",
+        override_default_response_type: true,
+        extras: {
+          setup: {},
+          featureType: "",
+          sessionInfoVersion: "3",
+        },
+      }
+    );
+  };
+
+  const handleDisconnect = async () => {
+    setIsDisconnecting(true);
+    setError("");
+    setSuccess("");
+    try {
+      await api.disconnectWhatsApp();
+      setStatus({
+        is_connected: false,
+        whatsapp_enabled: false,
+        phone_number_id: null,
+        business_account_id: null,
+        display_phone_number: null,
+        verified_name: null,
+      });
+      setSuccess("WhatsApp déconnecté");
+    } catch (err: any) {
+      setError(err.message || "Erreur");
+    } finally {
+      setIsDisconnecting(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="border border-border/50">
+        <CardContent className="flex justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border border-border/50">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10">
+            <MessageCircle className="h-4 w-4 text-emerald-600" />
+          </div>
+          <div>
+            <CardTitle className="text-base">WhatsApp Business</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Connectez votre compte WhatsApp Business pour envoyer des messages
+            </p>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {error && <div className="p-3 rounded-lg bg-destructive/10 text-sm text-destructive">{error}</div>}
+        {success && <div className="p-3 rounded-lg bg-emerald-500/10 text-sm text-emerald-600">{success}</div>}
+
+        {status?.is_connected ? (
+          // ─── État connecté ─────────────────────────────────────────
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-500/5 border border-emerald-200/50">
+              <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">WhatsApp connecté</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {status.verified_name && <span className="font-medium">{status.verified_name} — </span>}
+                  {status.display_phone_number || status.phone_number_id}
+                </p>
+              </div>
+              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px]">
+                Actif
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 rounded-lg border border-border/50">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Phone Number ID</p>
+                <p className="text-xs font-mono text-foreground mt-1">{status.phone_number_id}</p>
+              </div>
+              <div className="p-3 rounded-lg border border-border/50">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Business Account ID</p>
+                <p className="text-xs font-mono text-foreground mt-1">{status.business_account_id}</p>
+              </div>
+            </div>
+
+            <Separator />
+
+            <Button
+              variant="outline"
+              className="text-red-500 border-red-200 hover:bg-red-500/10"
+              onClick={handleDisconnect}
+              disabled={isDisconnecting}
+            >
+              {isDisconnecting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Unplug className="mr-2 h-4 w-4" />}
+              Déconnecter WhatsApp
+            </Button>
+          </div>
+        ) : (
+          // ─── État non connecté ─────────────────────────────────────
+          <div className="space-y-4">
+            <div className="p-5 rounded-xl border border-dashed border-border bg-muted/20 text-center space-y-3">
+              <div className="flex justify-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
+                  <MessageCircle className="h-6 w-6 text-emerald-500" />
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Connectez votre WhatsApp Business</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                  En quelques clics, reliez votre numéro WhatsApp Business pour envoyer des messages, templates et notifications à vos clients.
+                </p>
+              </div>
+
+              {config ? (
+                <Button
+                  onClick={launchEmbeddedSignup}
+                  disabled={isConnecting || !sdkLoaded}
+                  className="bg-[#25D366] hover:bg-[#128C7E] text-white font-medium shadow-lg shadow-emerald-500/20"
+                >
+                  {isConnecting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                  )}
+                  {isConnecting ? "Connexion en cours..." : "Connecter WhatsApp"}
+                </Button>
+              ) : (
+                <p className="text-xs text-muted-foreground italic">
+                  L'Embedded Signup n'est pas encore configuré. Contactez l'administrateur.
+                </p>
+              )}
+            </div>
+
+            <div className="text-[11px] text-muted-foreground space-y-1">
+              <p>• Vous serez redirigé vers Meta pour créer ou sélectionner votre compte WhatsApp Business</p>
+              <p>• Un numéro de téléphone sera associé (ne doit pas être déjà utilisé sur WhatsApp)</p>
+              <p>• La connexion est instantanée, aucune configuration manuelle nécessaire</p>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

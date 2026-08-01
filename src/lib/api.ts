@@ -42,7 +42,7 @@ import type {
 } from "./types";
 import { tokenStorage } from "./token-storage";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/v1";
 
 interface ApiError {
   detail: string | Array<{ loc: string[]; msg: string; type: string }>;
@@ -197,10 +197,21 @@ class ApiClient {
   // ─── Auth ───────────────────────────────────────────────────────────────────
 
   async login(email: string, password: string) {
-    return this.request<AuthTokens>("/auth/login", {
+    // Appel direct sans passer par le mécanisme de refresh/logout
+    const response = await fetch(`${this.baseUrl}/auth/login`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
+
+    if (!response.ok) {
+      const error: ApiError = await response
+        .json()
+        .catch(() => ({ detail: "Email ou mot de passe incorrect" }));
+      throw new Error(formatApiError(error));
+    }
+
+    return response.json() as Promise<AuthTokens>;
   }
 
   async forgotPassword(email: string) {
@@ -480,6 +491,42 @@ class ApiClient {
     return this.request<Tenant>("/tenant");
   }
 
+  // ─── WhatsApp Embedded Signup ───────────────────────────────────────────────
+
+  async getWhatsAppSignupConfig() {
+    return this.request<{ app_id: string; config_id: string; api_version: string }>("/whatsapp/embedded-signup/config");
+  }
+
+  async getWhatsAppConnectionStatus() {
+    return this.request<{
+      is_connected: boolean;
+      whatsapp_enabled: boolean;
+      phone_number_id: string | null;
+      business_account_id: string | null;
+      display_phone_number: string | null;
+      verified_name: string | null;
+    }>("/whatsapp/embedded-signup/status");
+  }
+
+  async submitWhatsAppSignupCode(code: string) {
+    return this.request<{
+      message: string;
+      waba_id: string;
+      phone_number_id: string;
+      display_phone_number: string | null;
+      verified_name: string | null;
+    }>("/whatsapp/embedded-signup/callback", {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    });
+  }
+
+  async disconnectWhatsApp() {
+    return this.request<{ message: string }>("/whatsapp/embedded-signup/disconnect", {
+      method: "POST",
+    });
+  }
+
   // ─── SMS ────────────────────────────────────────────────────────────────────
 
   async getSmsBalance() {
@@ -586,6 +633,77 @@ class ApiClient {
 
   async getWorkersStatus() {
     return this.request<WorkersStatus>("/admin/workers");
+  }
+
+  // ─── WhatsApp ───────────────────────────────────────────────────────────────
+
+  async getWhatsAppStats() {
+    return this.request<{
+      total_messages: number;
+      sent: number;
+      delivered: number;
+      read: number;
+      failed: number;
+      delivery_rate: number;
+      read_rate: number;
+      approved_templates: number;
+    }>("/whatsapp/stats");
+  }
+
+  async getWhatsAppMessages(params?: { page?: number; page_size?: number; status?: string; phone?: string }) {
+    const query = params
+      ? "?" + new URLSearchParams(
+          Object.fromEntries(Object.entries(params).filter(([_, v]) => v != null).map(([k, v]) => [k, String(v)]))
+        ).toString()
+      : "";
+    return this.request<PaginatedResponse<any>>(`/whatsapp/messages${query}`);
+  }
+
+  async sendWhatsAppTemplate(data: { phone: string; template_name: string; language_code?: string; components?: any[] }) {
+    return this.request<{ message_id: string; phone: string; status: string; template_name: string }>("/whatsapp/send", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async sendWhatsAppText(data: { phone: string; content: string }) {
+    return this.request<{ message_id: string; phone: string; status: string }>("/whatsapp/send-text", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async sendWhatsAppBulk(data: { phones?: string[]; group_id?: string; template_name: string; language_code?: string; components?: any[] }) {
+    return this.request<{ total: number; sent: number; failed: number; template_name: string }>("/whatsapp/send-bulk", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getWhatsAppTemplates(params?: { page?: number; page_size?: number; status?: string; category?: string }) {
+    const query = params
+      ? "?" + new URLSearchParams(
+          Object.fromEntries(Object.entries(params).filter(([_, v]) => v != null).map(([k, v]) => [k, String(v)]))
+        ).toString()
+      : "";
+    return this.request<PaginatedResponse<any>>(`/whatsapp/templates${query}`);
+  }
+
+  async createWhatsAppTemplate(data: { name: string; category: string; language?: string; components: any[]; body_text?: string; header_text?: string; footer_text?: string }) {
+    return this.request<any>("/whatsapp/templates", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async syncWhatsAppTemplates() {
+    return this.request<{ synced: number; created: number; total_from_meta: number; message: string }>("/whatsapp/templates/sync", {
+      method: "POST",
+    });
+  }
+
+  async deleteWhatsAppTemplate(id: string) {
+    return this.request<{ message: string }>(`/whatsapp/templates/${id}`, { method: "DELETE" });
   }
 }
 

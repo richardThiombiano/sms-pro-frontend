@@ -203,25 +203,25 @@ export default function CreditsPage() {
                 label="Transactionnel"
                 value={stats.summary.by_type.transactional}
                 total={stats.summary.total}
-                color="bg-emerald-500"
+                color="bg-emerald-600"
               />
               <TypeBar
                 label="Promotionnel"
                 value={stats.summary.by_type.promotional}
                 total={stats.summary.total}
-                color="bg-emerald-500"
+                color="bg-rose-600"
               />
               <TypeBar
                 label="Anniversaire"
                 value={stats.summary.by_type.birthday}
                 total={stats.summary.total}
-                color="bg-emerald-500"
+                color="bg-purple-600"
               />
               <TypeBar
                   label="Rappel"
                   value={stats.summary.by_type.reminder}
                   total={stats.summary.total}
-                  color="bg-emerald-500"
+                  color="bg-amber-600"
               />
 
             </CardContent>

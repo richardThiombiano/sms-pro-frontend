@@ -501,6 +501,10 @@ function EditTenantModal({ tenant, onClose, onSaved }: { tenant: any; onClose: (
     smsbus_password: "",
     smsbus_id: tenant.smsbus_id || "",
     smsbus_sender_id: tenant.smsbus_sender_id || "",
+    whatsapp_phone_number_id: tenant.whatsapp_phone_number_id || "",
+    whatsapp_business_account_id: tenant.whatsapp_business_account_id || "",
+    whatsapp_access_token: "",
+    whatsapp_enabled: tenant.whatsapp_enabled || false,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
@@ -512,9 +516,10 @@ function EditTenantModal({ tenant, onClose, onSaved }: { tenant: any; onClose: (
     setIsSaving(true);
     setError("");
     try {
-      // Ne pas envoyer le password s'il est vide
+      // Ne pas envoyer les champs sensibles s'ils sont vides
       const data: any = { ...form };
       if (!data.smsbus_password) delete data.smsbus_password;
+      if (!data.whatsapp_access_token) delete data.whatsapp_access_token;
       await api.updateAdminTenant(tenant.id, data);
       onSaved();
       onClose();
@@ -572,6 +577,44 @@ function EditTenantModal({ tenant, onClose, onSaved }: { tenant: any; onClose: (
               <label className="text-sm font-medium">Sender ID</label>
               <Input className="h-10" value={form.smsbus_sender_id} onChange={(e) => updateForm("smsbus_sender_id", e.target.value)} />
             </div>
+          </div>
+
+          <Separator />
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">WhatsApp Business API</p>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <span className="text-xs text-muted-foreground">{form.whatsapp_enabled ? "Activé" : "Désactivé"}</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={form.whatsapp_enabled}
+                onClick={() => updateForm("whatsapp_enabled", !form.whatsapp_enabled)}
+                className={cn(
+                  "relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors",
+                  form.whatsapp_enabled ? "bg-emerald-500" : "bg-muted"
+                )}
+              >
+                <span className={cn(
+                  "pointer-events-none block h-4 w-4 rounded-full bg-white shadow-sm transition-transform",
+                  form.whatsapp_enabled ? "translate-x-4" : "translate-x-0"
+                )} />
+              </button>
+            </label>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Phone Number ID</label>
+              <Input className="h-10" placeholder="Ex: 123456789012345" value={form.whatsapp_phone_number_id} onChange={(e) => updateForm("whatsapp_phone_number_id", e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Business Account ID</label>
+              <Input className="h-10" placeholder="Ex: 987654321098765" value={form.whatsapp_business_account_id} onChange={(e) => updateForm("whatsapp_business_account_id", e.target.value)} />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Access Token</label>
+            <Input type="password" className="h-10" placeholder="Laisser vide pour ne pas changer" value={form.whatsapp_access_token} onChange={(e) => updateForm("whatsapp_access_token", e.target.value)} />
+            <p className="text-[10px] text-muted-foreground">Token d'accès permanent depuis Meta Business Suite</p>
           </div>
 
           <Separator />

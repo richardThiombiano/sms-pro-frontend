@@ -1,21 +1,11 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/api/health/route": "app/api/health/route.js",
-  "/auth/forgot-password/page": "app/auth/forgot-password/page.js",
-  "/auth/register/page": "app/auth/register/page.js",
   "/auth/login/page": "app/auth/login/page.js",
-  "/page": "app/page.js",
-  "/(admin)/admin/workers/page": "app/(admin)/admin/workers/page.js",
-  "/(dashboard)/credits/page": "app/(dashboard)/credits/page.js",
-  "/(dashboard)/campaigns/page": "app/(dashboard)/campaigns/page.js",
-  "/(admin)/admin/tenants/page": "app/(admin)/admin/tenants/page.js",
+  "/(dashboard)/automations/page": "app/(dashboard)/automations/page.js",
+  "/(dashboard)/templates/page": "app/(dashboard)/templates/page.js",
+  "/(admin)/admin/page": "app/(admin)/admin/page.js",
   "/(admin)/admin/users/page": "app/(admin)/admin/users/page.js",
   "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
-  "/(dashboard)/settings/page": "app/(dashboard)/settings/page.js",
-  "/(dashboard)/templates/page": "app/(dashboard)/templates/page.js",
-  "/(dashboard)/groups/page": "app/(dashboard)/groups/page.js",
-  "/(dashboard)/messages/page": "app/(dashboard)/messages/page.js",
-  "/(admin)/admin/page": "app/(admin)/admin/page.js",
-  "/(dashboard)/contacts/page": "app/(dashboard)/contacts/page.js",
-  "/(dashboard)/automations/page": "app/(dashboard)/automations/page.js"
+  "/(dashboard)/whatsapp/page": "app/(dashboard)/whatsapp/page.js",
+  "/(dashboard)/settings/page": "app/(dashboard)/settings/page.js"
 }

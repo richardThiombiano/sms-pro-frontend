@@ -27,6 +27,7 @@ import {
   X,
   FolderKanban,
   BarChart3,
+  MessageCircle,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +50,12 @@ const navigation = [
     items: [
       { name: "Templates", href: "/templates", icon: FileText, color: "text-pink-500" },
       { name: "Programmation d'envoi", href: "/automations", icon: Zap, color: "text-amber-500" },
+    ],
+  },
+  {
+    label: "WHATSAPP",
+    items: [
+      { name: "WhatsApp", href: "/whatsapp", icon: MessageCircle, color: "text-green-500" },
     ],
   },
   {
