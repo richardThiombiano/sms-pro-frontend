@@ -62,6 +62,7 @@ const navigation = [
     label: "COMPTE",
     items: [
       { name: "Statistiques", href: "/credits", icon: BarChart3, color: "text-indigo-500" },
+      { name: "Facturation", href: "/billing", icon: CreditCard, color: "text-orange-500", ownerOnly: true },
       { name: "Paramètres", href: "/settings", icon: Settings, color: "text-gray-500" },
     ],
   },
@@ -117,7 +118,9 @@ function Sidebar({ collapsed, onToggle, onLogout, user, tenant, smsBalance }: Si
               </p>
             )}
             <div className="space-y-1">
-              {group.items.map((item) => {
+              {group.items
+                .filter((item) => !(item as any).ownerOnly || user?.role === "owner")
+                .map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <Link

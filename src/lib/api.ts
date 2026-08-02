@@ -196,12 +196,12 @@ class ApiClient {
 
   // ─── Auth ───────────────────────────────────────────────────────────────────
 
-  async login(email: string, password: string) {
+  async login(identifier: string, password: string) {
     // Appel direct sans passer par le mécanisme de refresh/logout
     const response = await fetch(`${this.baseUrl}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ identifier, password }),
     });
 
     if (!response.ok) {
@@ -633,6 +633,182 @@ class ApiClient {
 
   async getWorkersStatus() {
     return this.request<WorkersStatus>("/admin/workers");
+  }
+
+  // ─── Registration Management ────────────────────────────────────────────────
+
+  async register(data: { company_name: string; email: string; phone: string; username: string; first_name: string; last_name: string; password: string; sender_id: string }) {
+    const response = await fetch(`${this.baseUrl}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: `Erreur ${response.status}` }));
+      throw new Error(typeof error.detail === "string" ? error.detail : "Erreur lors de l'inscription");
+    }
+    return response.json();
+  }
+
+  async getPendingRegistrations(params?: { page?: number; page_size?: number }) {
+    const query = params
+      ? "?" + new URLSearchParams(
+          Object.fromEntries(Object.entries(params).filter(([_, v]) => v != null).map(([k, v]) => [k, String(v)]))
+        ).toString()
+      : "";
+    return this.request<any>(`/admin/pending-registrations${query}`);
+  }
+
+  async approveRegistration(tenantId: string) {
+    return this.request<any>(`/admin/pending-registrations/${tenantId}/approve`, { method: "POST" });
+  }
+
+  async rejectRegistration(tenantId: string) {
+    return this.request<any>(`/admin/pending-registrations/${tenantId}/reject`, { method: "POST" });
+  }
+
+  // ─── Billing ─────────────────────────────────────────────────────────────────
+
+  async getSubscription() {
+    return this.request<any>("/billing/subscription");
+  }
+
+  async getPaymentInfo() {
+    return this.request<{
+      merchant_code: string;
+      merchant_name: string;
+      qr_code_url: string | null;
+      subscription_amount: number;
+      currency: string;
+      instructions: string;
+    }>("/billing/payment-info");
+  }
+
+  async getRecharges(params?: { page?: number; page_size?: number }) {
+    const query = params
+      ? "?" + new URLSearchParams(
+          Object.fromEntries(Object.entries(params).filter(([_, v]) => v != null).map(([k, v]) => [k, String(v)]))
+        ).toString()
+      : "";
+    return this.request<any>(`/billing/recharges${query}`);
+  }
+
+  async getBillingPayments(params?: { page?: number; page_size?: number }) {
+    const query = params
+      ? "?" + new URLSearchParams(
+          Object.fromEntries(Object.entries(params).filter(([_, v]) => v != null).map(([k, v]) => [k, String(v)]))
+        ).toString()
+      : "";
+    return this.request<any>(`/billing/payments${query}`);
+  }
+
+  async createPaymentRequest(data: { type: string; amount: number; reference: string }) {
+    return this.request<any>("/billing/payment-request", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // ─── Admin Billing ──────────────────────────────────────────────────────────
+
+  async getAdminBillingStats() {
+    return this.request<{
+      active_subscriptions: number;
+      expired_subscriptions: number;
+      monthly_revenue: number;
+      monthly_recharges: number;
+      pending_recharges: number;
+      currency: string;
+    }>("/admin/billing/stats");
+  }
+
+  async getAdminSubscriptions(params?: { page?: number; page_size?: number; status?: string; tenant_id?: string }) {
+    const query = params
+      ? "?" + new URLSearchParams(
+          Object.fromEntries(Object.entries(params).filter(([_, v]) => v != null).map(([k, v]) => [k, String(v)]))
+        ).toString()
+      : "";
+    return this.request<any>(`/admin/billing/subscriptions${query}`);
+  }
+
+  async activateSubscription(data: { tenant_id: string; months?: number; payment_method?: string; payment_reference?: string; notes?: string }) {
+    return this.request<any>("/admin/billing/subscriptions/activate", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async renewSubscription(subscriptionId: string, data: { months?: number; payment_method?: string; payment_reference?: string; notes?: string }) {
+    return this.request<any>(`/admin/billing/subscriptions/${subscriptionId}/renew`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async cancelSubscription(subscriptionId: string) {
+    return this.request<any>(`/admin/billing/subscriptions/${subscriptionId}/cancel`, {
+      method: "POST",
+    });
+  }
+
+  async getAdminRecharges(params?: { page?: number; page_size?: number; status?: string; tenant_id?: string }) {
+    const query = params
+      ? "?" + new URLSearchParams(
+          Object.fromEntries(Object.entries(params).filter(([_, v]) => v != null).map(([k, v]) => [k, String(v)]))
+        ).toString()
+      : "";
+    return this.request<any>(`/admin/billing/recharges${query}`);
+  }
+
+  async registerRecharge(data: { tenant_id: string; amount: number; method?: string; reference?: string; notes?: string }) {
+    return this.request<any>("/admin/billing/recharges", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async confirmRecharge(rechargeId: string, data?: { notes?: string }) {
+    return this.request<any>(`/admin/billing/recharges/${rechargeId}/confirm`, {
+      method: "PATCH",
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  async rejectRecharge(rechargeId: string, data?: { notes?: string }) {
+    return this.request<any>(`/admin/billing/recharges/${rechargeId}/reject`, {
+      method: "PATCH",
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  async getAdminPayments(params?: { page?: number; page_size?: number; type?: string; status?: string; tenant_id?: string }) {
+    const query = params
+      ? "?" + new URLSearchParams(
+          Object.fromEntries(Object.entries(params).filter(([_, v]) => v != null).map(([k, v]) => [k, String(v)]))
+        ).toString()
+      : "";
+    return this.request<any>(`/admin/billing/payments${query}`);
+  }
+
+  async getAdminPendingPayments(params?: { page?: number; page_size?: number }) {
+    const query = params
+      ? "?" + new URLSearchParams(
+          Object.fromEntries(Object.entries(params).filter(([_, v]) => v != null).map(([k, v]) => [k, String(v)]))
+        ).toString()
+      : "";
+    return this.request<any>(`/admin/billing/pending-payments${query}`);
+  }
+
+  async confirmPayment(paymentId: string) {
+    return this.request<any>(`/admin/billing/payments/${paymentId}/confirm`, {
+      method: "POST",
+    });
+  }
+
+  async rejectPayment(paymentId: string) {
+    return this.request<any>(`/admin/billing/payments/${paymentId}/reject`, {
+      method: "POST",
+    });
   }
 
   // ─── WhatsApp ───────────────────────────────────────────────────────────────

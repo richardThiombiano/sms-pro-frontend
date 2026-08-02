@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Routes qui nécessitent une authentification
-const protectedPaths = ["/dashboard", "/campaigns", "/contacts", "/groups", "/messages", "/templates", "/automations", "/credits", "/settings", "/admin"];
+const protectedPaths = ["/dashboard", "/campaigns", "/contacts", "/groups", "/messages", "/templates", "/automations", "/credits", "/billing", "/settings", "/admin"];
 
 // Routes publiques (accessibles sans token)
 const publicPaths = ["/auth/login", "/auth/register"];

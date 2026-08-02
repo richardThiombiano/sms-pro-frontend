@@ -153,7 +153,7 @@ export default function AdminUsersPage() {
                           <p className="text-sm font-medium text-foreground">
                             {user.first_name || ""} {user.last_name || ""}
                           </p>
-                          <p className="text-xs text-muted-foreground">{user.email}</p>
+                          <p className="text-xs text-muted-foreground">@{user.username} — {user.email}</p>
                         </div>
                       </td>
                       <td className="p-4">
@@ -326,7 +326,7 @@ export default function AdminUsersPage() {
 function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [tenants, setTenants] = useState<any[]>([]);
   const [form, setForm] = useState({
-    tenant_id: "", email: "", first_name: "", last_name: "", password: "", role: "member",
+    tenant_id: "", username: "", email: "", first_name: "", last_name: "", password: "", role: "member",
   });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
@@ -341,8 +341,12 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.tenant_id || !form.email || !form.first_name || !form.password) {
+    if (!form.tenant_id || !form.email || !form.first_name || !form.password || !form.username) {
       setError("Remplissez tous les champs obligatoires");
+      return;
+    }
+    if (form.username.length < 3 || !/^[a-z0-9._]+$/.test(form.username)) {
+      setError("Le username doit contenir min 3 caractères (lettres minuscules, chiffres, points, underscores)");
       return;
     }
     setIsSaving(true);
@@ -406,6 +410,13 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
           </div>
 
           <div className="space-y-2">
+            <label className="text-sm font-medium">Username *</label>
+            <Input className="h-10 bg-muted/30 border-border/50" placeholder="ex: jean.dupont" value={form.username}
+              onChange={(e) => updateForm("username", e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''))} required />
+            <p className="text-[11px] text-muted-foreground">Lettres minuscules, chiffres, points et underscores</p>
+          </div>
+
+          <div className="space-y-2">
             <label className="text-sm font-medium">Email *</label>
             <Input type="email" className="h-10 bg-muted/30 border-border/50" value={form.email}
               onChange={(e) => updateForm("email", e.target.value)} required />
@@ -451,6 +462,7 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
 function EditUserModal({ user, onClose, onSaved }: { user: any; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState({
+    username: user.username || "",
     email: user.email || "",
     first_name: user.first_name || "",
     last_name: user.last_name || "",
@@ -510,6 +522,12 @@ function EditUserModal({ user, onClose, onSaved }: { user: any; onClose: () => v
               <Input className="h-10 bg-muted/30 border-border/50" value={form.last_name}
                 onChange={(e) => updateForm("last_name", e.target.value)} />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Username</label>
+            <Input className="h-10 bg-muted/30 border-border/50" value={form.username}
+              onChange={(e) => updateForm("username", e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''))} />
           </div>
 
           <div className="space-y-2">

@@ -9,7 +9,7 @@ interface AuthState {
   smsBalance: SmsBalance | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<void>;
   logout: () => void;
   fetchUser: () => Promise<void>;
   fetchTenant: () => Promise<void>;
@@ -24,8 +24,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
   isAuthenticated: false,
 
-  login: async (email: string, password: string) => {
-    const response = await api.login(email, password);
+  login: async (identifier: string, password: string) => {
+    const response = await api.login(identifier, password);
     tokenStorage.setTokens(response.access_token, response.refresh_token);
 
     // Fetch user profile and tenant

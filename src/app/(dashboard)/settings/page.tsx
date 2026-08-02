@@ -472,6 +472,7 @@ function TeamSection() {
 }
 
 function AddMemberModal({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -482,14 +483,18 @@ function AddMemberModal({ onClose, onAdded }: { onClose: () => void; onAdded: ()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !firstName || !password) {
+    if (!username || !email || !firstName || !password) {
       setError("Remplissez tous les champs obligatoires");
+      return;
+    }
+    if (username.length < 3 || !/^[a-z0-9._]+$/.test(username)) {
+      setError("Le username doit contenir au moins 3 caractères (lettres minuscules, chiffres, points, underscores)");
       return;
     }
     setIsSaving(true);
     setError("");
     try {
-      await api.addTeamMember({ email, first_name: firstName, last_name: lastName, password, role });
+      await api.addTeamMember({ username, email, first_name: firstName, last_name: lastName, password, role });
       onAdded();
       onClose();
     } catch (err: any) {
@@ -521,6 +526,11 @@ function AddMemberModal({ onClose, onAdded }: { onClose: () => void; onAdded: ()
               <label className="text-sm font-medium">Nom</label>
               <Input className="h-10" value={lastName} onChange={(e) => setLastName(e.target.value)} />
             </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Username *</label>
+            <Input className="h-10" placeholder="ex: jean.dupont" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''))} required />
+            <p className="text-[11px] text-muted-foreground">Lettres minuscules, chiffres, points et underscores</p>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Email *</label>

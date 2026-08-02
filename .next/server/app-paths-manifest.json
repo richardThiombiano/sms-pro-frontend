@@ -1,11 +1,7 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
+  "/auth/register/page": "app/auth/register/page.js",
   "/auth/login/page": "app/auth/login/page.js",
-  "/(dashboard)/automations/page": "app/(dashboard)/automations/page.js",
-  "/(dashboard)/templates/page": "app/(dashboard)/templates/page.js",
-  "/(admin)/admin/page": "app/(admin)/admin/page.js",
   "/(admin)/admin/users/page": "app/(admin)/admin/users/page.js",
-  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
-  "/(dashboard)/whatsapp/page": "app/(dashboard)/whatsapp/page.js",
-  "/(dashboard)/settings/page": "app/(dashboard)/settings/page.js"
+  "/(admin)/admin/billing/page": "app/(admin)/admin/billing/page.js",
+  "/(admin)/admin/workers/page": "app/(admin)/admin/workers/page.js"
 }

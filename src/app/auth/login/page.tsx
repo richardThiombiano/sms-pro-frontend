@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Send, Eye, EyeOff, ArrowRight, Sparkles } from "lucide-react";
@@ -9,25 +9,52 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/lib/auth-store";
+import { getBlockedSeconds, recordFailedAttempt, resetAttempts } from "@/lib/rate-limiter";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [blockedSeconds, setBlockedSeconds] = useState(0);
 
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
 
+  // Timer pour le countdown de blocage
+  useEffect(() => {
+    const remaining = getBlockedSeconds();
+    if (remaining > 0) setBlockedSeconds(remaining);
+  }, []);
+
+  useEffect(() => {
+    if (blockedSeconds <= 0) return;
+    const timer = setInterval(() => {
+      const remaining = getBlockedSeconds();
+      setBlockedSeconds(remaining);
+      if (remaining <= 0) clearInterval(timer);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [blockedSeconds]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Vérifier si bloqué
+    const remaining = getBlockedSeconds();
+    if (remaining > 0) {
+      setBlockedSeconds(remaining);
+      setError(`Trop de tentatives. Réessayez dans ${remaining} secondes.`);
+      return;
+    }
+
     setIsLoading(true);
     setError("");
 
     try {
-      await login(email, password);
-      // Redirect based on role
+      await login(identifier, password);
+      resetAttempts();
       const user = useAuthStore.getState().user;
       if (user?.role === "superadmin") {
         router.push("/admin");
@@ -35,7 +62,13 @@ export default function LoginPage() {
         router.push("/dashboard");
       }
     } catch (err: any) {
-      setError(err.message || "Email ou mot de passe incorrect");
+      const blockDuration = recordFailedAttempt();
+      if (blockDuration > 0) {
+        setBlockedSeconds(blockDuration);
+        setError(`Trop de tentatives. Réessayez dans ${blockDuration} secondes.`);
+      } else {
+        setError(err.message || "Identifiant ou mot de passe incorrect");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -130,14 +163,14 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
-                Email
+                Identifiant
               </label>
               <Input
-                type="email"
-                placeholder="vous@entreprise.com"
+                type="text"
+                placeholder="Username ou email"
                 className="h-11 bg-muted/30 border-border/50 focus:border-primary/40 focus:ring-primary/20"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 required
               />
             </div>
@@ -179,11 +212,13 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              disabled={isLoading}
-              className="w-full h-11 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-medium shadow-lg shadow-primary/25 transition-all duration-200"
+              disabled={isLoading || blockedSeconds > 0}
+              className="w-full h-11 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-medium shadow-lg shadow-primary/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : blockedSeconds > 0 ? (
+                <>Réessayer dans {blockedSeconds}s</>
               ) : (
                 <>
                   Se connecter

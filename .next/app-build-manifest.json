@@ -1,15 +1,20 @@
 {
   "pages": {
-    "/auth/login/page": [
+    "/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/auth/login/page.js"
+      "static/chunks/app/page.js"
     ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
+    ],
+    "/auth/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/auth/login/page.js"
     ],
     "/(admin)/admin/page": [
       "static/chunks/webpack.js",
@@ -36,6 +41,11 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(admin)/not-found.js"
     ],
+    "/(admin)/admin/registrations/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(admin)/admin/registrations/page.js"
+    ],
     "/(admin)/admin/tenants/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -45,6 +55,16 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(admin)/admin/users/page.js"
+    ],
+    "/auth/register/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/auth/register/page.js"
+    ],
+    "/(admin)/admin/billing/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(admin)/admin/billing/page.js"
     ],
     "/(admin)/admin/workers/page": [
       "static/chunks/webpack.js",
@@ -76,36 +96,6 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(dashboard)/not-found.js"
     ],
-    "/(dashboard)/campaigns/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/campaigns/page.js"
-    ],
-    "/(dashboard)/contacts/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/contacts/page.js"
-    ],
-    "/(dashboard)/groups/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/groups/page.js"
-    ],
-    "/(dashboard)/messages/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/messages/page.js"
-    ],
-    "/(dashboard)/templates/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/templates/page.js"
-    ],
-    "/(dashboard)/automations/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/automations/page.js"
-    ],
     "/(dashboard)/whatsapp/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -120,11 +110,6 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(dashboard)/settings/page.js"
-    ],
-    "/_not-found/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
     ]
   }
 }

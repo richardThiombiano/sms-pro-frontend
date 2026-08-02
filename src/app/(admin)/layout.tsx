@@ -22,6 +22,7 @@ import {
   Sun,
   BarChart3,
   Cpu,
+  CreditCard,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -29,8 +30,10 @@ import { Separator } from "@/components/ui/separator";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard, color: "text-blue-400" },
+  { name: "Inscriptions", href: "/admin/registrations", icon: Users, color: "text-cyan-400" },
   { name: "Entreprises", href: "/admin/tenants", icon: Building2, color: "text-emerald-400" },
   { name: "Utilisateurs", href: "/admin/users", icon: Users, color: "text-purple-400" },
+  { name: "Facturation", href: "/admin/billing", icon: CreditCard, color: "text-orange-400" },
   { name: "Workers", href: "/admin/workers", icon: Cpu, color: "text-amber-400" },
 ];
 
