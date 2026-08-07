@@ -541,6 +541,23 @@ class ApiClient {
     return this.request<MessageStatusCheck>(`/sms/messages/${messageId}/status`);
   }
 
+  async estimateSmsCost(phone: string, content: string) {
+    return this.request<{
+      segments: number;
+      encoding: string;
+      char_count: number;
+      chars_per_segment: number;
+      unit_price: number | null;
+      total_cost: number | null;
+      country_code: string | null;
+      country_name: string | null;
+      is_exact: boolean;
+    }>("/sms/estimate-cost", {
+      method: "POST",
+      body: JSON.stringify({ phone, content }),
+    });
+  }
+
   async getMessages(params?: { page?: number; page_size?: number; status?: string; type?: string; phone?: string }) {
     const query = params
       ? "?" + new URLSearchParams(

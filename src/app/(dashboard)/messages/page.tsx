@@ -43,6 +43,7 @@ interface Message {
   sent_at: string | null;
   delivered_at: string | null;
   segments_count: number;
+  cost: number | null;
   created_at: string | null;
   contact_first_name: string | null;
   contact_last_name: string | null;
@@ -323,6 +324,26 @@ function SendSmsModal({
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
   const [inputMode, setInputMode] = useState<"manual" | "contact">("contact");
+  const [costEstimate, setCostEstimate] = useState<{ segments: number; total_cost: number | null; country_name: string | null; is_exact: boolean } | null>(null);
+
+  // Estimation du coût en temps réel
+  const resolvedPhone = inputMode === "contact" ? selectedContact?.phone || "" : phone;
+
+  useEffect(() => {
+    if (!resolvedPhone || !content || content.length < 1) {
+      setCostEstimate(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const result = await api.estimateSmsCost(resolvedPhone, content);
+        setCostEstimate({ segments: result.segments, total_cost: result.total_cost, country_name: result.country_name, is_exact: result.is_exact });
+      } catch {
+        setCostEstimate(null);
+      }
+    }, 500); // Debounce 500ms
+    return () => clearTimeout(timer);
+  }, [resolvedPhone, content]);
 
   if (!isOpen) return null;
 
@@ -335,8 +356,6 @@ function SendSmsModal({
     setInputMode("contact");
     onClose();
   };
-
-  const resolvedPhone = inputMode === "contact" ? selectedContact?.phone || "" : phone;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -453,6 +472,16 @@ function SendSmsModal({
                 </span>
               </div>
             </div>
+            {costEstimate && costEstimate.total_cost != null && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">
+                  {costEstimate.is_exact ? "Coût" : "Coût estimé"} : {costEstimate.total_cost.toFixed(2)} FCFA
+                </span>
+                <span>•</span>
+                <span>{costEstimate.segments} segment(s)</span>
+                {costEstimate.country_name && <span>• {costEstimate.country_name}</span>}
+              </div>
+            )}
           </div>
 
           <Separator />
@@ -500,6 +529,24 @@ function SendBulkSmsModal({
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
   const [inputMode, setInputMode] = useState<"manual" | "contacts">("contacts");
+  const [costEstimate, setCostEstimate] = useState<{ segments: number; unit_price: number | null; total_cost: number | null } | null>(null);
+
+  // Estimation du coût en temps réel
+  useEffect(() => {
+    if (!content || content.length < 1) {
+      setCostEstimate(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const result = await api.estimateSmsCost("+22670000000", content);
+        setCostEstimate({ segments: result.segments, unit_price: result.unit_price, total_cost: result.total_cost });
+      } catch {
+        setCostEstimate(null);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [content]);
 
   if (!isOpen) return null;
 
@@ -646,11 +693,16 @@ function SendBulkSmsModal({
             <div className="p-3 rounded-lg bg-primary/5 border border-primary/10 text-sm">
               <p className="font-medium text-foreground">Résumé</p>
               <p className="text-muted-foreground mt-1">
-                {phoneCount} destinataire(s) × {Math.ceil(content.length / 160) || 1} segment(s) ={" "}
-                <span className="font-semibold text-foreground">
-                  {phoneCount * (Math.ceil(content.length / 160) || 1)} crédit(s)
-                </span>
+                {phoneCount} destinataire(s) × {costEstimate?.segments || Math.ceil(content.length / 160) || 1} segment(s)
+                {costEstimate?.unit_price != null && (
+                  <> × {costEstimate.unit_price} FCFA</>
+                )}
               </p>
+              {costEstimate?.unit_price != null && (
+                <p className="font-bold text-primary mt-1">
+                  Coût total estimé : {(phoneCount * (costEstimate.total_cost || 0)).toLocaleString()} FCFA
+                </p>
+              )}
             </div>
           )}
 
@@ -700,6 +752,24 @@ function SendToGroupsModal({
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [costEstimate, setCostEstimate] = useState<{ segments: number; unit_price: number | null; total_cost: number | null } | null>(null);
+
+  // Estimation du coût en temps réel
+  useEffect(() => {
+    if (!content || content.length < 1) {
+      setCostEstimate(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const result = await api.estimateSmsCost("+22670000000", content);
+        setCostEstimate({ segments: result.segments, unit_price: result.unit_price, total_cost: result.total_cost });
+      } catch {
+        setCostEstimate(null);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [content]);
 
   useEffect(() => {
     if (isOpen) {
@@ -853,11 +923,16 @@ function SendToGroupsModal({
             <div className="p-3 rounded-lg bg-primary/5 border border-primary/10 text-sm">
               <p className="font-medium text-foreground">Résumé</p>
               <p className="text-muted-foreground mt-1">
-                {selectedGroups.length} groupe(s) • ~{totalContacts} contact(s) × {Math.ceil(content.length / 160) || 1} segment(s) ={" "}
-                <span className="font-semibold text-foreground">
-                  ~{totalContacts * (Math.ceil(content.length / 160) || 1)} crédit(s)
-                </span>
+                {selectedGroups.length} groupe(s) • ~{totalContacts} contact(s) × {costEstimate?.segments || Math.ceil(content.length / 160) || 1} segment(s)
+                {costEstimate?.unit_price != null && (
+                  <> × {costEstimate.unit_price} FCFA</>
+                )}
               </p>
+              {costEstimate?.unit_price != null && (
+                <p className="font-bold text-primary mt-1">
+                  Coût total estimé : {(totalContacts * (costEstimate.total_cost || 0)).toLocaleString()} FCFA
+                </p>
+              )}
             </div>
           )}
 
@@ -1044,7 +1119,7 @@ export default function MessagesPage() {
             <div className="flex gap-2">
               {[
                 { value: null, label: "Tous" },
-                // { value: "queued", label: "En file" },
+                { value: "queued", label: "En file" },
                 { value: "sent", label: "Envoyés" },
                 { value: "delivered", label: "Délivrés" },
                 { value: "failed", label: "Échoués" },
@@ -1122,6 +1197,9 @@ export default function MessagesPage() {
                     Date Envoi
                   </th>                  
                   <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Coût
+                  </th>
+                  <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Action
                   </th>
                   
@@ -1131,7 +1209,7 @@ export default function MessagesPage() {
               <tbody>
                 {messages.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-12">
+                    <td colSpan={9} className="text-center py-12">
                       <MessageSquare className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
                       <p className="text-sm font-medium text-muted-foreground">Aucun message</p>
                       <p className="text-xs text-muted-foreground mt-1">
@@ -1189,7 +1267,12 @@ export default function MessagesPage() {
                         </td>
                         <td className="p-4">
                           <span className="text-xs text-muted-foreground">{formatDate(message.sent_at)}</span>
-                        </td>                        
+                        </td>
+                        <td className="p-4">
+                          <span className="text-sm font-medium text-foreground">
+                            {message.cost != null ? `${message.cost.toFixed(2)} FCFA` : "—"}
+                          </span>
+                        </td>
                         <td className="p-4">
                           <Button
                             variant="ghost"
@@ -1293,13 +1376,27 @@ function MessageDetailModal({
     setCheckResult(null);
     try {
       const result = await api.checkMessageStatus(message.id);
+      const statusLabels: Record<string, string> = {
+        delivered: "Délivré",
+        sent: "Envoyé",
+        enroute: "En cours",
+        expired: "Expiré",
+        deleted: "Supprimé",
+        undeliverable: "Non délivrable",
+        unknown: "Inconnu",
+        pending: "En attente",
+        queued: "En file",
+        failed: "Échoué",
+      };
+      const translateStatus = (s: string | null) => s ? (statusLabels[s] || s) : "Inconnu";
+
       if (result.updated) {
-        setCheckResult(`Statut mis à jour: ${result.provider_status}`);
+        setCheckResult(`Statut mis à jour: ${translateStatus(result.provider_status)}`);
         onStatusUpdated();
       } else if (result.error) {
         setCheckResult(`Erreur: ${result.error}`);
       } else {
-        setCheckResult(`Statut inchangé: ${result.provider_status || message.status}`);
+        setCheckResult(`Statut inchangé: ${translateStatus(result.provider_status || message.status)}`);
       }
     } catch (err: any) {
       setCheckResult(`Erreur: ${err.message}`);
@@ -1358,9 +1455,15 @@ function MessageDetailModal({
               <span className="text-sm text-muted-foreground">Date de création</span>
               <span className="text-sm text-foreground">{formatDate(message.created_at)}</span>
             </div>
-            <div className="flex justify-between items-center py-2">
+            <div className="flex justify-between items-center py-2 border-b border-border/30">
               <span className="text-sm text-muted-foreground">Date d'envoi</span>
               <span className="text-sm text-foreground">{formatDate(message.sent_at)}</span>
+            </div>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-sm text-muted-foreground">Coût</span>
+              <span className="text-sm font-medium text-foreground">
+                {message.cost != null ? `${message.cost.toFixed(2)} FCFA` : "—"}
+              </span>
             </div>
           </div>
 

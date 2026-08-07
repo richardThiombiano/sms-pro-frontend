@@ -1,9 +1,40 @@
 /** @type {import('next').NextConfig} */
+
+const isDev = process.env.NODE_ENV !== 'production';
+
 const nextConfig = {
   output: 'standalone',
 
   // Headers de sécurité HTTP
   async headers() {
+    // En développement, on applique une CSP permissive pour ne pas
+    // interférer avec le hot-reload et webpack de Next.js
+    const cspValue = isDev
+      ? [
+          "default-src 'self'",
+          "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://connect.facebook.net",
+          "style-src 'self' 'unsafe-inline'",
+          "img-src 'self' data: blob: https:",
+          "font-src 'self' data:",
+          "connect-src 'self' http://localhost:* ws://localhost:* https://connect.facebook.net https://graph.facebook.com https://*.facebook.com",
+          "frame-src https://www.facebook.com https://web.facebook.com",
+          "object-src 'self' data:",
+          "base-uri 'self'",
+        ].join('; ')
+      : [
+          "default-src 'self'",
+          "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://connect.facebook.net",
+          "style-src 'self' 'unsafe-inline'",
+          "img-src 'self' data: blob: https:",
+          "font-src 'self' data:",
+          "connect-src 'self' http://localhost:8000 https://*.execute-api.eu-west-1.amazonaws.com https://connect.facebook.net https://graph.facebook.com https://*.facebook.com",
+          "frame-src https://www.facebook.com https://web.facebook.com",
+          "frame-ancestors 'none'",
+          "object-src 'none'",
+          "base-uri 'self'",
+          "form-action 'self'",
+        ].join('; ');
+
     return [
       {
         // Appliquer à toutes les routes
@@ -42,17 +73,7 @@ const nextConfig = {
           // Content Security Policy
           {
             key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https:",
-              "font-src 'self' data:",
-              "connect-src 'self' http://localhost:8000 https://*.execute-api.eu-west-1.amazonaws.com",
-              "frame-ancestors 'none'",
-              "base-uri 'self'",
-              "form-action 'self'",
-            ].join('; '),
+            value: cspValue,
           },
           // Empêcher le DNS prefetching non voulu
           {

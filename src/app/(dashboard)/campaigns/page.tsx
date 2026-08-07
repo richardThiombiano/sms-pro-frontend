@@ -313,6 +313,7 @@ function CreateCampaignModal({
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
+  const [costEstimate, setCostEstimate] = useState<{ segments: number; total_cost: number | null; unit_price: number | null; is_exact: boolean } | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -334,6 +335,29 @@ function CreateCampaignModal({
         .catch(() => {});
     }
   }, [isOpen]);
+
+  // Estimation du coût de la campagne
+  useEffect(() => {
+    if (!content || content.length < 1) {
+      setCostEstimate(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        // Utiliser un numéro burkinabè fictif pour estimer le prix par segment
+        const result = await api.estimateSmsCost("+22670000000", content);
+        setCostEstimate({
+          segments: result.segments,
+          total_cost: result.total_cost,
+          unit_price: result.unit_price,
+          is_exact: result.is_exact,
+        });
+      } catch {
+        setCostEstimate(null);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [content]);
 
   if (!isOpen) return null;
 
@@ -483,6 +507,28 @@ function CreateCampaignModal({
                   </span>
                 </div>
               </div>
+              {costEstimate && costEstimate.unit_price != null && (
+                <div className="mt-2 p-3 rounded-lg bg-muted/30 border border-border/50">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">
+                      {costEstimate.segments} segment(s) × {costEstimate.unit_price} FCFA
+                    </span>
+                    <span className="font-semibold text-foreground">
+                      {costEstimate.total_cost?.toFixed(2)} FCFA / SMS
+                    </span>
+                  </div>
+                  {targetGroupId && groups.find((g) => g.id === targetGroupId) && (
+                    <div className="flex items-center justify-between text-xs mt-1 pt-1 border-t border-border/30">
+                      <span className="text-muted-foreground">
+                        {groups.find((g) => g.id === targetGroupId)?.contact_count || 0} destinataire(s)
+                      </span>
+                      <span className="font-bold text-primary">
+                        Coût total estimé : {((costEstimate.total_cost || 0) * (groups.find((g) => g.id === targetGroupId)?.contact_count || 0)).toLocaleString()} FCFA
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -745,6 +791,7 @@ export default function CampaignsPage() {
                 { value: null, label: "Toutes" },
                 { value: "draft", label: "Brouillons" },
                 { value: "scheduled", label: "Programmées" },
+                { value: "cancelled", label: "Annulées" },
                 { value: "sending", label: "En cours" },
                 { value: "sent", label: "Envoyées" },
               ].map((filter) => (
@@ -1136,6 +1183,19 @@ function CampaignDetailModal({ campaign, onClose }: { campaign: Campaign; onClos
     ? ((campaign.total_failed / campaign.total_sent) * 100).toFixed(1)
     : "0";
 
+  const [groupName, setGroupName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (campaign.target_group_id) {
+      api.getGroups({ page: 1, page_size: 100 })
+        .then((data) => {
+          const group = data.items.find((g: any) => g.id === campaign.target_group_id);
+          if (group) setGroupName(group.name);
+        })
+        .catch(() => {});
+    }
+  }, [campaign.target_group_id]);
+
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "—";
     return new Date(dateStr).toLocaleDateString("fr-FR", {
@@ -1168,6 +1228,17 @@ function CampaignDetailModal({ campaign, onClose }: { campaign: Campaign; onClos
               <p className={cn("text-xs font-medium", type.color)}>{type.label}</p>
             </div>
           </div>
+
+          {/* Groupe cible */}
+          {campaign.target_group_id && (
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/20 border border-border/50">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Groupe cible</p>
+                <p className="text-sm font-medium text-foreground">{groupName || "Chargement..."}</p>
+              </div>
+            </div>
+          )}
 
           {/* Contenu du message */}
           <div className="space-y-2">

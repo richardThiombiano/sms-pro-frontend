@@ -159,6 +159,7 @@ export interface Message {
   provider_message_id: string | null;
   error_message: string | null;
   segments_count: number;
+  cost: number | null;
   campaign_id: string | null;
   sent_at: string | null;
   delivered_at: string | null;

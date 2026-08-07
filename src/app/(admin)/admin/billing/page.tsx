@@ -34,6 +34,8 @@ export default function AdminBillingPage() {
   // Modals
   const [showActivateModal, setShowActivateModal] = useState(false);
   const [showRechargeModal, setShowRechargeModal] = useState(false);
+  const [showConfirmPaymentModal, setShowConfirmPaymentModal] = useState(false);
+  const [paymentToConfirm, setPaymentToConfirm] = useState<any>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
   // Form state
@@ -143,6 +145,8 @@ export default function AdminBillingPage() {
     setActionLoading(true);
     try {
       await api.confirmPayment(paymentId);
+      setShowConfirmPaymentModal(false);
+      setPaymentToConfirm(null);
       await loadData();
     } catch (e: any) {
       alert(e.message || "Erreur");
@@ -337,7 +341,7 @@ export default function AdminBillingPage() {
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        onClick={() => handleConfirmPayment(p.id)}
+                        onClick={() => { setPaymentToConfirm(p); setShowConfirmPaymentModal(true); }}
                         disabled={actionLoading}
                       >
                         <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
@@ -537,6 +541,56 @@ export default function AdminBillingPage() {
               {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Enregistrer la recharge
             </Button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal : Confirmation de validation de paiement */}
+      {showConfirmPaymentModal && paymentToConfirm && (
+        <Modal onClose={() => { setShowConfirmPaymentModal(false); setPaymentToConfirm(null); }} title="Confirmer le paiement">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                Êtes-vous sûr de vouloir valider ce paiement ? Cette action est irréversible.
+              </p>
+            </div>
+            <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Montant</span>
+                <span className="font-semibold text-foreground">{paymentToConfirm.amount?.toLocaleString()} FCFA</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Type</span>
+                <span className="text-foreground">{paymentToConfirm.type === "subscription" ? "Abonnement" : "Recharge"}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Entreprise</span>
+                <span className="text-foreground">{paymentToConfirm.tenant_name || "—"}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Référence</span>
+                <span className="font-mono text-foreground">{paymentToConfirm.reference || "—"}</span>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => { setShowConfirmPaymentModal(false); setPaymentToConfirm(null); }}
+                disabled={actionLoading}
+              >
+                Annuler
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => handleConfirmPayment(paymentToConfirm.id)}
+                disabled={actionLoading}
+              >
+                {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+                Valider le paiement
+              </Button>
+            </div>
           </div>
         </Modal>
       )}
