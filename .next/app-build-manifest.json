@@ -41,95 +41,25 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(dashboard)/not-found.js"
     ],
-    "/(dashboard)/campaigns/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/campaigns/page.js"
-    ],
-    "/(dashboard)/messages/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/messages/page.js"
-    ],
     "/(dashboard)/contacts/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(dashboard)/contacts/page.js"
-    ],
-    "/(dashboard)/billing/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/billing/page.js"
-    ],
-    "/(admin)/admin/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(admin)/admin/page.js"
-    ],
-    "/(admin)/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(admin)/layout.js"
-    ],
-    "/(admin)/error": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(admin)/error.js"
-    ],
-    "/(admin)/loading": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(admin)/loading.js"
-    ],
-    "/(admin)/not-found": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(admin)/not-found.js"
-    ],
-    "/(admin)/admin/registrations/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(admin)/admin/registrations/page.js"
-    ],
-    "/(admin)/admin/billing/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(admin)/admin/billing/page.js"
     ],
     "/(dashboard)/groups/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(dashboard)/groups/page.js"
     ],
-    "/(dashboard)/templates/page": [
+    "/(dashboard)/messages/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/templates/page.js"
+      "static/chunks/app/(dashboard)/messages/page.js"
     ],
-    "/(dashboard)/automations/page": [
+    "/_not-found/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/automations/page.js"
-    ],
-    "/(admin)/admin/users/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(admin)/admin/users/page.js"
-    ],
-    "/(dashboard)/credits/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/credits/page.js"
-    ],
-    "/(dashboard)/settings/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/settings/page.js"
-    ],
-    "/(dashboard)/whatsapp/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/whatsapp/page.js"
+      "static/chunks/app/_not-found/page.js"
     ]
   }
 }

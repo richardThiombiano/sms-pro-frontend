@@ -266,7 +266,7 @@ function CreateTenantModal({ onClose, onCreated }: { onClose: () => void; onCrea
   const [form, setForm] = useState({
     name: "", email: "", phone: "",
     smsbus_username: "", smsbus_password: "", smsbus_id: "", smsbus_sender_id: "",
-    owner_first_name: "", owner_last_name: "", owner_email: "", owner_password: "",
+    owner_first_name: "", owner_last_name: "", owner_username: "", owner_email: "", owner_password: "",
   });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
@@ -338,6 +338,11 @@ function CreateTenantModal({ onClose, onCreated }: { onClose: () => void; onCrea
 
           <Separator />
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Compte propriétaire</p>
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Nom de connexion (username) *</label>
+            <Input className="h-10" placeholder="Ex: jean.dupont" value={form.owner_username} onChange={(e) => updateForm("owner_username", e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''))} required />
+            <p className="text-[10px] text-muted-foreground">Lettres minuscules, chiffres, points et underscores uniquement</p>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-sm font-medium">Prénom *</label>

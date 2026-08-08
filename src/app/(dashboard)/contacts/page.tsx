@@ -14,6 +14,7 @@ import {
   Trash2,
   Edit,
   Send,
+  FileText,
   CheckCircle2,
   XCircle,
   ChevronLeft,
@@ -373,12 +374,47 @@ function AddContactModal({
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Date de naissance</label>
-            <Input
-              type="date"
-              className="h-10 bg-muted/30 border-border/50"
-              value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
-            />
+            <div className="flex gap-2">
+              <select
+                className="h-10 flex-1 rounded-md bg-muted/30 border border-border/50 px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+                value={birthDate ? birthDate.split("-")[2] : ""}
+                onChange={(e) => {
+                  const parts = (birthDate || "--").split("-");
+                  setBirthDate(`${parts[0] || "2000"}-${parts[1] || "01"}-${e.target.value.padStart(2, "0")}`);
+                }}
+              >
+                <option value="">Jour</option>
+                {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                  <option key={d} value={String(d).padStart(2, "0")}>{d}</option>
+                ))}
+              </select>
+              <select
+                className="h-10 flex-[2] rounded-md bg-muted/30 border border-border/50 px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+                value={birthDate ? birthDate.split("-")[1] : ""}
+                onChange={(e) => {
+                  const parts = (birthDate || "--").split("-");
+                  setBirthDate(`${parts[0] || "2000"}-${e.target.value}-${parts[2] || "01"}`);
+                }}
+              >
+                <option value="">Mois</option>
+                {["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"].map((m, i) => (
+                  <option key={i} value={String(i + 1).padStart(2, "0")}>{m}</option>
+                ))}
+              </select>
+              <select
+                className="h-10 flex-1 rounded-md bg-muted/30 border border-border/50 px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+                value={birthDate ? birthDate.split("-")[0] : ""}
+                onChange={(e) => {
+                  const parts = (birthDate || "--").split("-");
+                  setBirthDate(`${e.target.value}-${parts[1] || "01"}-${parts[2] || "01"}`);
+                }}
+              >
+                <option value="">Année</option>
+                {Array.from({ length: 80 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -596,12 +632,47 @@ function EditContactModal({
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Date de naissance</label>
-              <Input
-                type="date"
-                className="h-10 bg-muted/30 border-border/50"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-              />
+              <div className="flex gap-2">
+                <select
+                  className="h-10 flex-1 rounded-md bg-muted/30 border border-border/50 px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+                  value={birthDate ? birthDate.split("-")[2] : ""}
+                  onChange={(e) => {
+                    const parts = (birthDate || "--").split("-");
+                    setBirthDate(`${parts[0] || "2000"}-${parts[1] || "01"}-${e.target.value.padStart(2, "0")}`);
+                  }}
+                >
+                  <option value="">Jour</option>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                    <option key={d} value={String(d).padStart(2, "0")}>{d}</option>
+                  ))}
+                </select>
+                <select
+                  className="h-10 flex-[2] rounded-md bg-muted/30 border border-border/50 px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+                  value={birthDate ? birthDate.split("-")[1] : ""}
+                  onChange={(e) => {
+                    const parts = (birthDate || "--").split("-");
+                    setBirthDate(`${parts[0] || "2000"}-${e.target.value}-${parts[2] || "01"}`);
+                  }}
+                >
+                  <option value="">Mois</option>
+                  {["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"].map((m, i) => (
+                    <option key={i} value={String(i + 1).padStart(2, "0")}>{m}</option>
+                  ))}
+                </select>
+                <select
+                  className="h-10 flex-1 rounded-md bg-muted/30 border border-border/50 px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+                  value={birthDate ? birthDate.split("-")[0] : ""}
+                  onChange={(e) => {
+                    const parts = (birthDate || "--").split("-");
+                    setBirthDate(`${e.target.value}-${parts[1] || "01"}-${parts[2] || "01"}`);
+                  }}
+                >
+                  <option value="">Année</option>
+                  {Array.from({ length: 80 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -658,8 +729,237 @@ function EditContactModal({
 }
 
 // ============================================
-// IMPORT CONTACTS MODAL
+// CONTACT DETAIL MODAL (Fiche contact + Timeline)
 // ============================================
+
+const INTERACTION_TYPES_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
+  note: { label: "Note", color: "text-gray-600", icon: "📝" },
+  visit: { label: "Visite", color: "text-blue-600", icon: "🚶" },
+  purchase: { label: "Achat", color: "text-emerald-600", icon: "🛒" },
+  complaint: { label: "Réclamation", color: "text-red-600", icon: "⚠️" },
+  call_in: { label: "Appel entrant", color: "text-purple-600", icon: "📞" },
+  call_out: { label: "Appel sortant", color: "text-purple-600", icon: "📱" },
+  email: { label: "Email", color: "text-cyan-600", icon: "✉️" },
+  meeting: { label: "Rendez-vous", color: "text-amber-600", icon: "📅" },
+  quote: { label: "Devis", color: "text-indigo-600", icon: "📄" },
+  payment: { label: "Paiement", color: "text-emerald-600", icon: "💳" },
+  return: { label: "Retour produit", color: "text-orange-600", icon: "↩️" },
+  support: { label: "Support technique", color: "text-indigo-600", icon: "🔧" },
+  feedback: { label: "Avis client", color: "text-yellow-600", icon: "⭐" },
+  other: { label: "Autre", color: "text-gray-500", icon: "💬" },
+};
+
+function ContactDetailModal({
+  contact,
+  onClose,
+  onEdit,
+}: {
+  contact: Contact;
+  onClose: () => void;
+  onEdit: () => void;
+}) {
+  const [notes, setNotes] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [newNote, setNewNote] = useState("");
+  const [interactionType, setInteractionType] = useState("note");
+  const [isAdding, setIsAdding] = useState(false);
+  const [filterType, setFilterType] = useState<string | null>(null);
+
+  const fetchNotes = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const params: any = { page: 1, page_size: 100 };
+      if (filterType) params.interaction_type = filterType;
+      const data = await api.getContactNotes(contact.id, params);
+      setNotes(data.items);
+    } catch {}
+    setIsLoading(false);
+  }, [contact.id, filterType]);
+
+  useEffect(() => {
+    fetchNotes();
+  }, [fetchNotes]);
+
+  const handleAdd = async () => {
+    if (!newNote.trim()) return;
+    setIsAdding(true);
+    try {
+      const note = await api.createContactNote(contact.id, { interaction_type: interactionType, content: newNote.trim() });
+      setNotes((prev) => [note, ...prev]);
+      setNewNote("");
+    } catch {}
+    setIsAdding(false);
+  };
+
+  const handleDelete = async (noteId: string) => {
+    try {
+      await api.deleteContactNote(contact.id, noteId);
+      setNotes((prev) => prev.filter((n) => n.id !== noteId));
+    } catch {}
+  };
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return "—";
+    return new Date(dateStr).toLocaleDateString("fr-FR", {
+      day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+    });
+  };
+
+  const initials = ((contact.first_name?.[0] || "") + (contact.last_name?.[0] || "")).toUpperCase() || contact.phone.slice(-2);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-3xl mx-4 bg-background rounded-2xl border border-border shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 text-primary font-bold text-lg">
+              {initials}
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-foreground">
+                {[contact.first_name, contact.last_name].filter(Boolean).join(" ") || "Contact"}
+              </h3>
+              <p className="text-sm text-muted-foreground font-mono">{contact.phone}</p>
+              {contact.email && <p className="text-xs text-muted-foreground">{contact.email}</p>}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={onEdit}>
+              <Edit className="h-3.5 w-3.5 mr-1" /> Modifier
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Infos rapides */}
+        <div className="px-6 py-3 border-b border-border/50 bg-muted/20">
+          <div className="flex gap-4 text-xs text-muted-foreground">
+            {contact.city && <span>📍 {contact.city}{contact.country ? `, ${contact.country}` : ""}</span>}
+            {contact.gender && <span>{contact.gender === "M" ? "👨" : contact.gender === "F" ? "👩" : "🧑"} {contact.gender === "M" ? "Homme" : contact.gender === "F" ? "Femme" : contact.gender}</span>}
+            {contact.birth_date && <span>🎂 {new Date(contact.birth_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</span>}
+            <span>📅 Client depuis {new Date(contact.created_at).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</span>
+          </div>
+        </div>
+
+        {/* Corps : Timeline */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {/* Ajouter une interaction */}
+          <div className="space-y-3 p-4 rounded-xl border border-border/50 bg-muted/10">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nouvelle interaction</p>
+            <div className="flex gap-2 flex-wrap">
+              {Object.entries(INTERACTION_TYPES_CONFIG).map(([value, cfg]) => (
+                <button
+                  key={value}
+                  onClick={() => setInteractionType(value)}
+                  className={cn(
+                    "px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all",
+                    interactionType === value
+                      ? "bg-primary text-white border-primary shadow-sm"
+                      : "bg-background text-muted-foreground border-border/50 hover:bg-muted/50"
+                  )}
+                >
+                  {cfg.icon} {cfg.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <textarea
+                placeholder="Décrivez l'interaction..."
+                className="flex-1 h-20 p-3 rounded-lg bg-background border border-border/50 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+              />
+              <Button
+                size="sm"
+                className="h-20 px-5"
+                onClick={handleAdd}
+                disabled={isAdding || !newNote.trim()}
+              >
+                {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+
+          {/* Filtre par type */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Filtrer :</span>
+            <Button
+              variant={filterType === null ? "default" : "outline"}
+              size="sm"
+              className="h-7 text-[10px]"
+              onClick={() => setFilterType(null)}
+            >
+              Tout
+            </Button>
+            {Object.entries(INTERACTION_TYPES_CONFIG).slice(0, 6).map(([value, cfg]) => (
+              <Button
+                key={value}
+                variant={filterType === value ? "default" : "outline"}
+                size="sm"
+                className="h-7 text-[10px]"
+                onClick={() => setFilterType(value)}
+              >
+                {cfg.icon} {cfg.label}
+              </Button>
+            ))}
+          </div>
+
+          {/* Timeline */}
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : notes.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="text-4xl mb-3">📋</div>
+              <p className="text-sm font-medium text-muted-foreground">Aucune interaction enregistrée</p>
+              <p className="text-xs text-muted-foreground mt-1">Ajoutez une note pour commencer l'historique</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {notes.map((note) => {
+                const typeCfg = INTERACTION_TYPES_CONFIG[note.interaction_type] || INTERACTION_TYPES_CONFIG.other;
+                return (
+                  <div key={note.id} className="relative pl-8 group">
+                    {/* Timeline dot */}
+                    <div className="absolute left-0 top-2 w-6 h-6 rounded-full bg-muted/50 border-2 border-border flex items-center justify-center text-xs">
+                      {typeCfg.icon}
+                    </div>
+                    {/* Card */}
+                    <div className="p-4 rounded-xl border border-border/50 bg-background hover:shadow-sm transition-shadow">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={cn("text-[10px] px-2 py-0.5", typeCfg.color)}>
+                            {typeCfg.label}
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground">par {note.user_name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-muted-foreground">{formatDate(note.created_at)}</span>
+                          <button
+                            onClick={() => handleDelete(note.id)}
+                            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500 transition-all"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-sm text-foreground leading-relaxed">{note.content}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ImportContactsModal({
   onClose,
@@ -829,6 +1129,7 @@ export default function ContactsPage() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [viewingContact, setViewingContact] = useState<Contact | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingContactId, setDeletingContactId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -1034,7 +1335,7 @@ export default function ContactsPage() {
                   <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Statut
                   </th>
-                  <th className="w-24 p-4"></th>
+                  <th className="w-24 p-4"> ACTION</th>
                 </tr>
               </thead>
               <tbody>
@@ -1071,8 +1372,8 @@ export default function ContactsPage() {
                                 {initials}
                               </AvatarFallback>
                             </Avatar>
-                            <div>
-                              <p className="text-sm font-medium text-foreground">
+                            <div className="cursor-pointer" onClick={() => setViewingContact(contact)}>
+                              <p className="text-sm font-medium text-foreground hover:text-primary transition-colors">
                                 {contact.first_name || ""} {contact.last_name || ""}
                               </p>
                               {contact.email && (
@@ -1114,6 +1415,15 @@ export default function ContactsPage() {
                         </td>
                         <td className="p-4">
                           <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-amber-500 hover:bg-amber-50"
+                              onClick={() => setViewingContact(contact)}
+                              title="Notes & Interactions"
+                            >
+                              <FileText className="h-4 w-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -1174,6 +1484,19 @@ export default function ContactsPage() {
         <ImportContactsModal
           onClose={() => setShowImportModal(false)}
           onImported={fetchContacts}
+        />
+      )}
+
+      {/* Contact Detail Modal */}
+      {viewingContact && (
+        <ContactDetailModal
+          contact={viewingContact}
+          onClose={() => setViewingContact(null)}
+          onEdit={() => {
+            setEditingContact(viewingContact);
+            setShowEditModal(true);
+            setViewingContact(null);
+          }}
         />
       )}
 

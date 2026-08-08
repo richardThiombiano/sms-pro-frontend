@@ -305,6 +305,32 @@ class ApiClient {
     return this.request<void>(`/contacts/${id}`, { method: "DELETE" });
   }
 
+  // ─── Contact Notes ──────────────────────────────────────────────────────────
+
+  async getInteractionTypes() {
+    return this.request<{ value: string; label: string; icon: string; color: string }[]>("/contacts/interaction-types");
+  }
+
+  async getContactNotes(contactId: string, params?: { page?: number; page_size?: number; interaction_type?: string }) {
+    const query = params
+      ? "?" + new URLSearchParams(
+          Object.fromEntries(Object.entries(params).filter(([_, v]) => v != null).map(([k, v]) => [k, String(v)]))
+        ).toString()
+      : "";
+    return this.request<PaginatedResponse<{ id: string; contact_id: string; user_id: string; user_name: string; interaction_type: string; content: string; created_at: string }>>(`/contacts/${contactId}/notes${query}`);
+  }
+
+  async createContactNote(contactId: string, data: { interaction_type: string; content: string }) {
+    return this.request<{ id: string; contact_id: string; user_id: string; user_name: string; interaction_type: string; content: string; created_at: string }>(`/contacts/${contactId}/notes`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteContactNote(contactId: string, noteId: string) {
+    return this.request<void>(`/contacts/${contactId}/notes/${noteId}`, { method: "DELETE" });
+  }
+
   async importContacts(file: File) {
     const token = tokenStorage.getAccessToken();
     const formData = new FormData();
